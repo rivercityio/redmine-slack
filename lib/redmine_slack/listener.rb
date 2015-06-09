@@ -43,7 +43,7 @@ class SlackListener < Redmine::Hook::Listener
 		channel = channel_for_project issue.project
 		url = url_for_project issue.project
 
-		return unless channel and url and Setting.plugin_redmine_slack[:post_updates] == '1'
+		return unless url and Setting.plugin_redmine_slack[:post_updates] == '1'
 
 		msg = "[#{escape issue.project}] #{escape journal.user.to_s} updated <#{object_url issue}|#{escape issue}>#{mentions journal.notes}"
 
@@ -51,7 +51,19 @@ class SlackListener < Redmine::Hook::Listener
 		attachment[:text] = escape journal.notes if journal.notes
 		attachment[:fields] = journal.details.map { |d| detail_to_field d }
 
-		speak msg, channel, attachment, url
+		if channel
+			speak msg, channel, attachment, url
+		end
+
+		# Sending notes updates to assignee
+		if not journal.notes.empty? and journal.user != issue.assigned_to
+			cfAccount = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Account")).value rescue nil
+			cfSendAssignedNotes = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned Notes")).value rescue nil
+
+			if cfAccount and cfSendAssignedNotes == '1'
+				speak msg, "@" + cfAccount, attachment, url
+			end
+		end
 	end
 
 	def speak(msg, channel, attachment=nil, url=nil)
