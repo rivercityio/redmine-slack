@@ -34,6 +34,13 @@ class SlackListener < Redmine::Hook::Listener
 		} if Setting.plugin_redmine_slack[:display_watchers] == 'yes'
 
 		speak msg, channel, attachment, url
+
+		cfAccount = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Account")).value rescue nil
+		cfSendAssigned = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned")).value rescue nil
+
+		if cfAccount and cfSendAssigned == '1'
+			speak msg, "@" + cfAccount, attachment, url
+		end
 	end
 
 	def controller_issues_edit_after_save(context={})
@@ -56,14 +63,32 @@ class SlackListener < Redmine::Hook::Listener
 		end
 
 		# Sending notes updates to assignee
-		if not journal.notes.empty? and journal.user != issue.assigned_to
-			cfAccount = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Account")).value rescue nil
-			cfSendAssignedNotes = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned Notes")).value rescue nil
+		cfAccount = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Account")).value rescue nil
+		cfSendAssignedNotes = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned Notes")).value rescue nil
+		cfSendAssigned = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned")).value rescue nil
+		cfNewAssign = false
 
-			if cfAccount and cfSendAssignedNotes == '1'
-				speak msg, "@" + cfAccount, attachment, url
-			end
+		attachment[:fields].each do |field|
+	    	if field[:title] == "Assignee"
+	    		cfNewAssign = true
+	    	end	
 		end
+
+		if cfAccount and cfSendAssigned == '1' and cfSendAssignedNotes == '1'
+			if cfNewAssign
+				speak msg, "@" + cfAccount, attachment, url
+			elsif not journal.notes.empty? and journal.user != issue.assigned_to
+				speak msg, "@" + cfAccount, attachment, url
+			end	
+		elsif cfAccount and cfSendAssigned == '1'	
+			if cfNewAssign
+				speak msg, "@" + cfAccount, attachment, url
+			end	
+		elsif cfAccount and cfSendAssignedNotes == '1'
+			if not journal.notes.empty? and journal.user != issue.assigned_to
+				speak msg, "@" + cfAccount, attachment, url
+			end	
+		end	
 	end
 
 	def speak(msg, channel, attachment=nil, url=nil)
