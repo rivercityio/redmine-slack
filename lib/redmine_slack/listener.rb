@@ -43,6 +43,8 @@ class SlackListener < Redmine::Hook::Listener
 		if cfAccount and cfSendAssigned == '1'
 			sender.speak msg, "@" + cfAccount, attachment, url
 		end
+
+		notify_watchers issue.watcher_users, sender, msg, attachment, url
 	end
 
 	def controller_issues_edit_after_save(context={})
@@ -93,10 +95,19 @@ class SlackListener < Redmine::Hook::Listener
 			if not journal.notes.empty? and journal.user != issue.assigned_to
 				sender.speak msg, "@" + cfAccount, attachment, url
 			end	
-		end	
+		end
+
+		notify_watchers issue.watcher_users, sender, msg, attachment, url
 	end
 
 private
+
+	def notify_watchers(watcher_users, sender, msg, attachment, url)
+		watcher_users.each do |user|
+			cfAccount = user.custom_field_value(UserCustomField.find_by_name('Slack Account')) || nil
+			sender.speak msg, "@" + cfAccount, attachment, url
+		end if Setting.plugin_redmine_slack[:notify_watchers] == 'yes'
+	end
 
 	def url_for_project(proj)
         return nil if proj.blank?
