@@ -46,7 +46,7 @@ class SlackListener < Redmine::Hook::ViewListener
 			sender.speak msg, "@" + cfAccount, attachment, url
 		end
 
-		notify_watchers issue.watcher_users, sender, msg, attachment, url
+		notify_watchers issue, sender, msg, attachment, url
 	end
 
 	def controller_issues_edit_after_save(context={})
@@ -99,14 +99,14 @@ class SlackListener < Redmine::Hook::ViewListener
 			end	
 		end
 
-		notify_watchers issue.watcher_users, sender, msg, attachment, url
+		notify_watchers issue, sender, msg, attachment, url
 	end
 
 private
 
-	def notify_watchers(watcher_users, sender, msg, attachment, url)
-		watcher_users.each do |user|
-			if user.pref.slack_notify_as_watcher
+	def notify_watchers(issue, sender, msg, attachment, url)
+		issue.watcher_users.each do |user|
+			if user.pref.slack_notify_as_watcher && user.id != issue.assigned_to.id
 				cfAccount = user.pref.slack_account
 				sender.speak msg, "@" + cfAccount, attachment, url
 			end
