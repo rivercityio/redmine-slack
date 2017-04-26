@@ -1,6 +1,8 @@
 require "redmine_slack/slack_sender"
 
-class SlackListener < Redmine::Hook::Listener
+class SlackListener < Redmine::Hook::ViewListener
+	render_on(:view_my_account_preferences, partial: 'my/redmine_slack_preferences')
+
 	def controller_issues_new_after_save(context={})
 		issue = context[:issue]
 
@@ -37,8 +39,8 @@ class SlackListener < Redmine::Hook::Listener
 
 		sender.speak msg, channel, attachment, url
 
-		cfAccount = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Account")).value rescue nil
-		cfSendAssigned = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned")).value rescue nil
+		cfAccount = issue.assigned_to.pref.slack_account
+		cfSendAssigned = issue.assigned_to.pref.slack_assigned
 
 		if cfAccount and cfSendAssigned == '1'
 			sender.speak msg, "@" + cfAccount, attachment, url
@@ -70,9 +72,9 @@ class SlackListener < Redmine::Hook::Listener
 		end
 
 		# Sending notes updates to assignee
-		cfAccount = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Account")).value rescue nil
-		cfSendAssignedNotes = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned Notes")).value rescue nil
-		cfSendAssigned = issue.assigned_to.custom_value_for(UserCustomField.find_by_name("Slack Assigned")).value rescue nil
+		cfAccount = issue.assigned_to.pref.slack_account
+		cfSendAssignedNotes = issue.assigned_to.pref.slack_assigned_notes
+		cfSendAssigned = issue.assigned_to.pref.slack_assigned
 		cfNewAssign = false
 
 		attachment[:fields].each do |field|
@@ -104,9 +106,11 @@ private
 
 	def notify_watchers(watcher_users, sender, msg, attachment, url)
 		watcher_users.each do |user|
-			cfAccount = user.custom_field_value(UserCustomField.find_by_name('Slack Account')) || nil
-			sender.speak msg, "@" + cfAccount, attachment, url
-		end if Setting.plugin_redmine_slack[:notify_watchers] == 'yes'
+			if user.pref.slack_notify_as_watcher
+				cfAccount = user.pref.slack_account
+				sender.speak msg, "@" + cfAccount, attachment, url
+			end
+		end
 	end
 
 	def url_for_project(proj)

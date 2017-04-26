@@ -1,6 +1,9 @@
 require 'redmine'
+require 'redmine_slack/patches/user_preference_patch'
 
 require_dependency 'redmine_slack/listener'
+
+UserPreference.send(:include, RedmineSlack::Patches::UserPreferencePatch)
 
 Redmine::Plugin.register :redmine_slack do
 	name 'Redmine Slack'
@@ -19,7 +22,6 @@ Redmine::Plugin.register :redmine_slack do
 			'icon' => 'https://raw.github.com/sciyoshi/redmine-slack/gh-pages/icon.png',
 			'username' => 'redmine',
 			'display_watchers' => 'no',
-  		'notify_watchers' => 'yes'
 		},
 		:partial => 'settings/slack_settings'
 end
