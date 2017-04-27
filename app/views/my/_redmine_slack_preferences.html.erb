@@ -1,25 +1,25 @@
 <%= fields_for :pref, @user.pref do |pref_fields| %>
     <div style="width: 100%; height: 10px; border-bottom: 1px solid #ccc; text-align: center; margin-bottom: 20px">
       <span style=" background-color: #f6f6f6; padding: 0 10px;">
-        Slack notifications
+        <%= l(:label_slack_notifications)%>
       </span>
     </div>
     <p class="redmine-slack-preferences">
       <%= pref_fields.text_field :slack_account %>
-      <label for="pref_involved_in_related_notified">Account</label>
+      <label for="pref_involved_in_related_notified"><%= l(:label_slack_account) %></label>
     </p>
 
     <p class="redmine-slack-preferences">
       <%= pref_fields.check_box :slack_assigned_notes %>
-      <label for="pref_involved_in_related_notified">Assigned Notes</label>
+      <label for="pref_involved_in_related_notified"><%= l(:label_slack_assigned_notes)%></label>
     </p>
     <p class="redmine-slack-preferences">
       <%= pref_fields.check_box :slack_assigned %>
-      <label for="pref_involved_in_related_notified">Assigned</label>
+      <label for="pref_involved_in_related_notified"><%= l(:label_slack_assigned)%></label>
     </p>
     <p class="redmine-slack-preferences">
       <%= pref_fields.check_box :slack_notify_as_watcher %>
-      <label for="pref_involved_in_related_notified">Notify as watcher</label>
+      <label for="pref_involved_in_related_notified"><%= l(:label_slack_notify_as_watcher)%></label>
     </p>
     <hr>
 <% end %>
