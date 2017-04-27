@@ -39,10 +39,10 @@ class SlackListener < Redmine::Hook::ViewListener
 
 		sender.speak msg, channel, attachment, url
 
-		cfAccount = issue.assigned_to.pref.slack_account
-		cfSendAssigned = issue.assigned_to.pref.slack_assigned
+		cfAccount = issue.assigned_to.pref.slack_account rescue nil
+		cfSendAssigned = issue.assigned_to.pref.slack_assigned rescue nil
 
-		if cfAccount and cfSendAssigned == '1'
+		if cfAccount and cfSendAssigned
 			sender.speak msg, "@" + cfAccount, attachment, url
 		end
 
@@ -72,9 +72,9 @@ class SlackListener < Redmine::Hook::ViewListener
 		end
 
 		# Sending notes updates to assignee
-		cfAccount = issue.assigned_to.pref.slack_account
-		cfSendAssignedNotes = issue.assigned_to.pref.slack_assigned_notes
-		cfSendAssigned = issue.assigned_to.pref.slack_assigned
+		cfAccount = issue.assigned_to.pref.slack_account rescue nil
+		cfSendAssignedNotes = issue.assigned_to.pref.slack_assigned_notes rescue nil
+		cfSendAssigned = issue.assigned_to.pref.slack_assigned rescue nil
 		cfNewAssign = false
 
 		attachment[:fields].each do |field|
@@ -83,17 +83,17 @@ class SlackListener < Redmine::Hook::ViewListener
 	    	end	
 		end
 
-		if cfAccount and cfSendAssigned == '1' and cfSendAssignedNotes == '1'
+		if cfAccount and cfSendAssigned and cfSendAssignedNotes
 			if cfNewAssign
 				sender.speak msg, "@" + cfAccount, attachment, url
 			elsif not journal.notes.empty? and journal.user != issue.assigned_to
 				sender.speak msg, "@" + cfAccount, attachment, url
 			end	
-		elsif cfAccount and cfSendAssigned == '1'	
+		elsif cfAccount and cfSendAssigned
 			if cfNewAssign
 				sender.speak msg, "@" + cfAccount, attachment, url
 			end	
-		elsif cfAccount and cfSendAssignedNotes == '1'
+		elsif cfAccount and cfSendAssignedNotes
 			if not journal.notes.empty? and journal.user != issue.assigned_to
 				sender.speak msg, "@" + cfAccount, attachment, url
 			end	
@@ -106,7 +106,7 @@ private
 
 	def notify_watchers(issue, sender, msg, attachment, url)
 		issue.watcher_users.each do |user|
-			if user.pref.slack_notify_as_watcher && user.id != issue.assigned_to.id
+			if user.pref.slack_notify_as_watcher && user != issue.assigned_to
 				cfAccount = user.pref.slack_account
 				sender.speak msg, "@" + cfAccount, attachment, url
 			end
