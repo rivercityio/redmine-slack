@@ -49,6 +49,82 @@ class SlackListener < Redmine::Hook::ViewListener
 		notify_watchers issue, sender, msg, attachment, url
 	end
 
+	def controller_issues_bulk_edit_before_save(context={})
+		sender = SlackSender.new
+
+		issue = context[:issue]
+		journal = context[:params]['issue']
+		channel = channel_for_project issue.project
+		url = url_for_project issue.project
+		currentUser = User.current
+
+		return unless url and Setting.plugin_redmine_slack[:post_updates] == '1'
+
+		msg = "[#{sender.escape issue.project}] #{currentUser} updated <#{sender.object_url issue}|#{sender.escape issue}>"
+
+		attachment = {}
+        attachment[:fields] = journal.map { |d| 
+        	case d[0]
+        	when "status_id"
+            	{
+        			:title => 'Status',
+        			:value => sender.escape(issue.status.to_s),
+        			:short => true
+        		}
+        	when "priority_id"
+        		{
+        			:title => 'Priority',
+        			:value => sender.escape(issue.priority.to_s),
+        			:short => true
+        		}
+        	when "assigned_to_id"
+        		{
+        			:title => 'Assignee',
+        			:value => sender.escape(issue.assigned_to.to_s),
+        			:short => true
+        		}		
+        	when "tracker_id"
+        		{
+        			:title => 'Tracker',
+        			:value => sender.escape(issue.tracker.to_s),
+        			:short => true
+        		}		
+        	when "done_ratio"
+        		{
+        			:title => '% Done',
+        			:value => d[1],
+        			:short => true
+        		}			
+        	end
+        }
+  
+		if channel
+			sender.speak msg, channel, attachment, url
+		end
+
+		# Sending notes updates to assignee
+		cfAccount = issue.assigned_to.pref.slack_account rescue nil
+		te = issue.assigned_to.mails
+		cfSendAssigned = issue.assigned_to.pref.slack_assigned rescue nil
+		cfNewAssign = false
+
+		attachment[:fields].each do |field|
+	    	if field[:title] == "Assignee"
+	    		cfNewAssign = true
+	    	end	
+		end
+
+		if cfAccount and cfSendAssigned
+			if cfNewAssign
+				sender.speak msg, "@" + cfAccount, attachment, url
+			end	
+		end
+
+		notify_watchers issue, sender, msg, attachment, url
+
+	end
+
+
 	def controller_issues_edit_after_save(context={})
 
 		sender = SlackSender.new
