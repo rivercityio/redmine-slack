@@ -1,9 +1,11 @@
 require 'redmine'
 require 'redmine_slack/patches/user_preference_patch'
+require 'redmine_slack/patches/issue_patch'
 
 require_dependency 'redmine_slack/listener'
 
 UserPreference.send(:include, RedmineSlack::Patches::UserPreferencePatch)
+Issue.send(:include, RedmineSlack::Patches::IssuePatch)
 
 Redmine::Plugin.register :redmine_slack do
 	name 'Redmine Slack'
