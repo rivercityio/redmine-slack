@@ -2,7 +2,7 @@ module RedmineSlack
   module Patches
     module UserPreferencePatch
 
-      def self.included(base)
+      def self.prepended(base)
         base.send(:include, InstanceMethods)
 
         base.class_eval do
