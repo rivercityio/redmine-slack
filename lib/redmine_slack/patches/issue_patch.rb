@@ -29,10 +29,12 @@ module RedmineSlack
 
                     attachment = {}
                     attachment[:text] = sender.escape journal.notes if journal.notes
-                    attachment[:fields] = journal.details.map { |d| sender.detail_to_field d }
+                    attachment[:fields] = journal.details.map { |d|
+                        sender.detail_to_field d if d.custom_field.notifiable
+                    }.compact
 
                     if channel
-                        sender.speak msg, channel, attachment, url
+                        sender.speak msg, channel, attachment, url if (!attachment[:text].empty? || !attachment[:fields].empty?)
                     end
 
                     # Sending notes updates to assignee
