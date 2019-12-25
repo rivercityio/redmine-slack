@@ -30,7 +30,7 @@ module RedmineSlack
                     attachment = {}
                     attachment[:text] = sender.escape journal.notes if journal.notes
                     attachment[:fields] = journal.details.map { |d|
-                        sender.detail_to_field d if d.custom_field.notifiable
+                        sender.detail_to_field d if d.custom_field.nil? ? true : d.custom_field.notifiable
                     }.compact
 
                     if channel
