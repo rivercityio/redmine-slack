@@ -34,7 +34,7 @@ module RedmineSlack
                     }.compact
 
                     if channel
-                        sender.speak msg, channel, attachment, url if (!attachment[:text].empty? || !attachment[:fields].empty?)
+                        sender.speak msg, channel, attachment, url if (attachment.key?(:text) && !attachment[:text].empty? || attachment.key?(:fields) && !attachment[:fields].empty?)
                     end
 
                     # Sending notes updates to assignee
