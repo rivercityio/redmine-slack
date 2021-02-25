@@ -9,6 +9,15 @@ UserPreference.send(:prepend, RedmineSlack::Patches::UserPreferencePatch)
 Issue.send(:prepend, RedmineSlack::Patches::IssuePatch)
 CustomField.send(:prepend, RedmineSlack::Patches::CustomFieldPatch)
 
+Rails.configuration.to_prepare do
+  UserPreference.safe_attributes(
+  	:slack_account,
+  	:slack_notify_as_watcher,
+  	:slack_assigned_notes, 
+  	:slack_assigned
+  )
+end
+
 Redmine::Plugin.register :redmine_slack do
 	name 'Redmine Slack'
 	author 'Samuel Cormier-Iijima'
